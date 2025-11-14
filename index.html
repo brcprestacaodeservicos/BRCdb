@@ -1,452 +1,84 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BRC_db — Web (sql.js CDN)</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body{background:linear-gradient(180deg,#f5f8fb 0,#fff 100%);padding:18px;font-family:Inter,system-ui,Arial}
-    .topbar{display:flex;align-items:center;margin-bottom:18px}
-    .brand{font-weight:700;color:#0f172a;margin-right:12px}
-    .status{color:#475569;margin-left:12px}
-    .card-ui{background:#fff;border-radius:10px;padding:14px;box-shadow:0 6px 20px rgba(14,30,60,0.06);}
-    .sidebar{width:300px}
-    .small-muted{color:#64748b}
-    .table-wrapper{background:#fff;padding:10px;border-radius:8px;border:1px solid #e6f0ff}
-    pre.sql{background:#0b1220;color:#9ef39e;padding:12px;border-radius:6px;overflow:auto}
-    .mono{font-family:monospace}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BRC_db — Offline (BRC theme)</title>
+<link href="style.css" rel="stylesheet">
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">BRC_db</div>
+  <header class="top splash">
+    <div class="splash-inner">
+      <img src="logo.png" alt="BRC" class="logo-splash"/>
+      <h1>BRC_db</h1>
+    </div>
     <div id="status" class="status">Nenhum banco carregado</div>
-    <div style="margin-left:auto">
-      <input type="file" id="fileInput" accept=".sqlite,.db,.sqlite3" style="display:none" />
-      <input type="file" id="sqlFileInput" accept=".sql" style="display:none" />
-      <input type="file" id="csvInput" accept=".csv" style="display:none" />
-      <button class="btn btn-primary btn-sm" id="btnOpen">Abrir .db</button>
-      <button class="btn btn-outline-primary btn-sm" id="btnImportSQL">Importar .sql</button>
-      <button class="btn btn-outline-secondary btn-sm" id="btnNew">Novo DB</button>
-      <button class="btn btn-success btn-sm" id="btnExportDb">Exportar DB</button>
+    <div class="actions top-actions">
+      <input id="fileDbInput" type="file" accept=".sqlite,.db,.sqlite3" style="display:none"/>
+      <input id="fileSqlInput" type="file" accept=".sql" style="display:none"/>
+      <input id="fileCsvInput" type="file" accept=".csv" style="display:none"/>
+      <button id="btnOpenDb" class="btn primary">Abrir .db</button>
+      <button id="btnImportSql" class="btn outline">Importar .sql</button>
+      <button id="btnNewDb" class="btn outline">Criar banco</button>
+      <button id="btnExportDb" class="btn success">Exportar DB</button>
     </div>
-  </div>
+  </header>
 
-  <div style="display:flex;gap:16px">
-    <div class="sidebar">
-      <div class="card-ui mb-3">
-        <h6>Tabelas</h6>
-        <div id="tablesList" class="list-group small-muted">—</div>
-        <div class="mt-2"><button class="btn btn-sm btn-outline-primary" id="btnRefresh">Atualizar</button></div>
-        <hr/>
-        <h6>Criar tabela (rápido)</h6>
-        <input id="newTableName" class="form-control form-control-sm mb-1" placeholder="nome_tabela" />
-        <input id="newTableCols" class="form-control form-control-sm mb-1" placeholder="ex: id INTEGER PRIMARY KEY, nome TEXT" />
-        <div class="d-flex justify-content-end"><button id="btnCreateTable" class="btn btn-sm btn-success">Criar</button></div>
-      </div>
+  <main class="layout">
+    <aside class="sidebar card">
+      <h3>Bancos</h3>
+      <div id="banksList" class="list">Carregue ou crie um banco</div>
+      <div class="small">Escolha um banco para ver tabelas</div>
+      <hr/>
+      <h4>Criar tabela</h4>
+      <label>Banco</label>
+      <select id="selectBankForCreate" class="input"></select>
+      <label>Nome da tabela</label>
+      <input id="newTableName" class="input" placeholder="nome_tabela"/>
+      <label>Colunas (ex: id INTEGER PRIMARY KEY, nome TEXT)</label>
+      <input id="newTableCols" class="input" placeholder='id INTEGER PRIMARY KEY, nome TEXT'/>
+      <button id="btnCreateTable" class="btn primary block">Criar tabela</button>
+    </aside>
 
-      <div class="card-ui small-muted">
-        <strong>Dicas:</strong>
-        <ul>
-          <li>Use <code>Importar .sql</code> para restaurar dumps (CREATE + INSERT).</li>
-          <li>Se tiver problemas com arquivos grandes, use SQLite local.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div style="flex:1;min-width:0">
-      <div class="card-ui mb-3">
-        <h6>Console SQL</h6>
-        <textarea id="sqlArea" class="form-control" rows="6" placeholder="Digite sua query SQL..."></textarea>
-        <div class="d-flex align-items-center mt-2">
-          <button id="btnRun" class="btn btn-primary btn-sm">Executar</button>
-          <button id="btnClear" class="btn btn-outline-secondary btn-sm ms-2">Limpar</button>
-          <div id="queryInfo" class="ms-auto small-muted"></div>
+    <section class="main card">
+      <div class="sql-console">
+        <h4>Console SQL</h4>
+        <textarea id="sqlConsole" class="sqlarea" placeholder="Comandos SQL aparecerão aqui..."></textarea>
+        <div class="row">
+          <div>
+            <button id="btnRunSql" class="btn primary">Executar</button>
+            <button id="btnClearSql" class="btn outline">Limpar</button>
+            <button id="btnShowLog" class="btn outline">Mostrar log</button>
+          </div>
+          <div class="small muted" id="consoleStatus"></div>
         </div>
-        <div id="sqlResult" class="mt-3"></div>
       </div>
 
-      <div id="tableView" class="card-ui" style="display:none">
-        <div class="d-flex align-items-center mb-2">
-          <h6 id="tableTitle" class="me-auto">Tabela</h6>
-          <div id="tableCount" class="small-muted me-2">Linhas: 0</div>
-          <button id="btnExportTable" class="btn btn-sm btn-outline-secondary me-1">Export CSV</button>
-          <button id="btnImportTableCSV" class="btn btn-sm btn-outline-secondary">Import CSV</button>
-        </div>
-
-        <div class="mb-2 d-flex gap-2">
-          <input id="filterInput" class="form-control form-control-sm" placeholder='Filtro SQL para WHERE — ex: name LIKE "%jo%"' />
-          <select id="pageSize" class="form-select form-select-sm" style="width:120px"><option>10</option><option selected>25</option><option>50</option><option>100</option></select>
-          <div class="ms-auto">
-            <button id="btnPrev" class="btn btn-sm btn-outline-secondary">Anterior</button>
-            <button id="btnNext" class="btn btn-sm btn-outline-secondary">Próxima</button>
+      <div id="tableArea" class="table-area card" style="display:none">
+        <div class="table-header">
+          <h4 id="tableTitle">Tabela</h4>
+          <div id="tableInfo" class="muted"></div>
+          <div class="table-actions">
+            <button id="btnExportTableCsv" class="btn outline">Exportar CSV</button>
+            <button id="btnImportTableCsv" class="btn outline">Importar CSV</button>
           </div>
         </div>
-
-        <div id="tableDataArea"></div>
-        <div id="paginationArea" class="mt-2 small-muted"></div>
+        <div id="tableData" class="table-data"></div>
       </div>
-    </div>
-  </div>
 
-  <!-- sql.js CDN (loader + will fetch .wasm from same distribution) -->
-  <script src="https://sql.js.org/dist/sql-wasm.js"></script>
+      <div class="log card">
+        <h4>Log de ações</h4>
+        <div id="logArea" class="logArea"></div>
+      </div>
+    </section>
+  </main>
 
-  <script>
-  // ---------- BRC_db Web (single-file) ----------
-  let SQL = null;
-  let db = null;
-  let currentFileName = null;
-  let currentTable = null;
-  let currentPage = 1;
+  <footer class="footer">
+    <div>© BRC Prestação de Serviços — Sistema BRC_db</div>
+  </footer>
 
-  async function initSql(){
-    if(!window.initSqlJs) throw new Error('sql-wasm loader não encontrado.');
-    // locateFile points to official CDN wasm
-    SQL = await window.initSqlJs({ locateFile: file => `https://sql.js.org/dist/${file}` });
-    console.log('sql-wasm ready');
-  }
-
-  function setStatus(s){ document.getElementById('status').textContent = s; }
-
-  // Open .db file from user's disk
-  async function openDbFromFile(file){
-    const buf = await file.arrayBuffer();
-    db = new SQL.Database(new Uint8Array(buf));
-    currentFileName = file.name;
-    setStatus('Aberto: ' + currentFileName);
-    await refreshTables();
-  }
-
-  // Create new DB in memory
-  async function createNewDb(){
-    db = new SQL.Database();
-    currentFileName = 'BRC_db.sqlite';
-    setStatus('Banco criado: ' + currentFileName);
-    await refreshTables();
-  }
-
-  // Export DB as .sqlite file (download)
-  function exportDb(){
-    if(!db) return alert('Abra um DB primeiro.');
-    const data = db.export();
-    const blob = new Blob([data], {type:'application/octet-stream'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = currentFileName || 'BRC_db.sqlite';
-    a.click();
-    setTimeout(()=> URL.revokeObjectURL(a.href),1000);
-  }
-
-  // List tables and show in sidebar
-  async function refreshTables(){
-    if(!db){ document.getElementById('tablesList').innerHTML = '<div class="small-muted">Sem banco</div>'; return; }
-    const res = db.exec("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY name;");
-    const list = document.getElementById('tablesList');
-    list.innerHTML = '';
-    if(!res.length){ list.innerHTML = '<div class=\"small-muted\">Sem tabelas</div>'; return; }
-    const rows = res[0].values;
-    rows.forEach(r=>{
-      const name = r[0];
-      const li = document.createElement('div');
-      li.className = 'd-flex justify-content-between align-items-center mb-1';
-      const a = document.createElement('a'); a.href='#'; a.textContent = name; a.onclick = (e)=>{ e.preventDefault(); openTable(name); };
-      const grp = document.createElement('div');
-      grp.innerHTML = `<button class="btn btn-sm btn-outline-primary btn-small me-1" onclick="openTable('${name}')">Ver</button>
-                       <button class="btn btn-sm btn-outline-danger btn-small" onclick="dropTableConfirm('${name}')">Drop</button>`;
-      li.appendChild(a); li.appendChild(grp);
-      list.appendChild(li);
-    });
-  }
-
-  // Drop table with confirmation and automatic backup (download snapshot)
-  function dropTableConfirm(name){
-    if(!db) return;
-    if(!confirm('Criar backup e remover tabela '+name+'?')) return;
-    // download backup
-    const blob = new Blob([db.export()], {type:'application/octet-stream'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = (currentFileName || 'db') + '.backup.' + new Date().toISOString().replace(/[:.]/g,'-') + '.sqlite';
-    a.click();
-    setTimeout(()=> URL.revokeObjectURL(a.href),1000);
-    // drop
-    try{ db.run(`DROP TABLE IF EXISTS "${name}"`); alert('Tabela removida'); refreshTables(); document.getElementById('tableView').style.display='none'; }
-    catch(e){ alert('Erro: ' + e.message); }
-  }
-
-  // Run arbitrary SQL from console
-  function runSQL(){
-    const sql = document.getElementById('sqlArea').value;
-    if(!db) return alert('Abra um DB primeiro.');
-    try{
-      const t0 = performance.now();
-      const res = db.exec(sql);
-      const t1 = performance.now();
-      document.getElementById('queryInfo').textContent = `Executado em ${(t1-t0).toFixed(2)} ms — ${res.length} result set(s)`;
-      renderSqlResult(res);
-      refreshTables();
-    }catch(e){
-      document.getElementById('sqlResult').innerHTML = `<div class="alert alert-danger">Erro: ${e.message}</div>`;
-    }
-  }
-
-  // Render SQL result sets
-  function renderSqlResult(res){
-    const container = document.getElementById('sqlResult');
-    if(!res || !res.length){ container.innerHTML = '<div class="small-muted">Nenhum resultado</div>'; return; }
-    let html = '';
-    res.forEach((r, idx)=>{
-      html += `<div class="mb-3"><strong>Result ${idx+1}</strong>`;
-      html += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr>';
-      r.columns.forEach(c=> html += `<th>${escapeHtml(c)}</th>`);
-      html += '</tr></thead><tbody>';
-      r.values.forEach(row=>{ html += '<tr>'; row.forEach(v=> html += `<td>${escapeHtml(v)}</td>`); html += '</tr>'; });
-      html += '</tbody></table></div></div>';
-    });
-    container.innerHTML = html;
-  }
-
-  // escape HTML
-  function escapeHtml(v){ if(v===null || v===undefined) return ''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
-
-  // Open a table and show rows with pagination and simple filter
-  function openTable(name, page = 1){
-    if(!db) return;
-    currentTable = name;
-    currentPage = page;
-    document.getElementById('tableView').style.display = 'block';
-    document.getElementById('tableTitle').textContent = name;
-    const filter = document.getElementById('filterInput').value.trim();
-    const pageSize = Number(document.getElementById('pageSize').value);
-    const offset = (page-1)*pageSize;
-    const where = filter ? (' WHERE ' + filter) : '';
-    const countRes = db.exec(`SELECT COUNT(*) AS c FROM "${name}"${where}`);
-    const total = countRes.length ? countRes[0].values[0][0] : 0;
-    document.getElementById('tableCount').textContent = 'Linhas: ' + total;
-    const rowsRes = db.exec(`SELECT * FROM "${name}"${where} LIMIT ${pageSize} OFFSET ${offset}`);
-    const cols = rowsRes.length ? rowsRes[0].columns : [];
-    const rows = rowsRes.length ? rowsRes[0].values : [];
-    renderTable(cols, rows, total, page, pageSize);
-  }
-
-  // Render table area
-  function renderTable(cols, rows, total, page, pageSize){
-    const area = document.getElementById('tableDataArea');
-    if(!cols.length){ area.innerHTML = '<div class="small-muted">Sem linhas</div>'; return; }
-    let html = '<div class="table-responsive"><table class="table table-sm table-striped"><thead><tr>';
-    cols.forEach(c=> html += `<th>${escapeHtml(c)}</th>`);
-    html += '<th>Ações</th></tr></thead><tbody>';
-    rows.forEach((r, idx)=>{
-      html += '<tr>';
-      r.forEach(cell=> html += `<td>${escapeHtml(cell)}</td>`);
-      html += `<td><button class="btn btn-sm btn-outline-secondary btn-small me-1" onclick="editRow(${idx})">Editar</button><button class="btn btn-sm btn-danger btn-small" onclick="deleteRow(${idx})">Excluir</button></td></tr>`;
-    });
-    html += '</tbody></table></div>';
-    area.innerHTML = html;
-    const totalPages = Math.max(1, Math.ceil(total/pageSize));
-    document.getElementById('paginationArea').innerHTML = `Página ${page} de ${totalPages}`;
-    window._page = {cols, rows, page, pageSize, table: currentTable};
-  }
-
-  // Export current table as CSV
-  function exportTableCSV(){
-    if(!currentTable) return alert('Selecione uma tabela');
-    const res = db.exec(`SELECT * FROM "${currentTable}"`);
-    if(!res.length) return alert('Tabela vazia');
-    const cols = res[0].columns, rows = res[0].values;
-    let csv = cols.join(',') + '\\n';
-    rows.forEach(r=> {
-      csv += r.map(v=>{
-        if(v===null || v===undefined) return '';
-        const s = String(v);
-        if(s.includes(',')||s.includes('\\n')||s.includes('"')) return '"' + s.replace(/"/g,'""') + '"';
-        return s;
-      }).join(',') + '\\n';
-    });
-    const blob = new Blob([csv], {type:'text/csv'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (currentTable||'table') + '.csv'; a.click(); setTimeout(()=> URL.revokeObjectURL(a.href),1000);
-  }
-
-  // Import CSV into current table (naive: header must match columns)
-  async function importCsvToTable(file){
-    if(!currentTable) return alert('Selecione uma tabela');
-    const text = await file.text();
-    const rows = parseCSV(text);
-    if(rows.length < 1) return alert('CSV vazio');
-    const header = rows[0];
-    db.run('BEGIN TRANSACTION');
-    try{
-      for(let i=1;i<rows.length;i++){
-        const vals = rows[i].map(v => v===''? null : v);
-        const quoted = vals.map(v => v===null? 'NULL' : "'" + String(v).replace(/'/g,"''") + "'").join(',');
-        const sql = `INSERT INTO "${currentTable}" (${header.map(h=>'"'+h+'"').join(',')}) VALUES (${quoted})`;
-        db.run(sql);
-      }
-      db.run('COMMIT');
-      alert('Import concluído: ' + (rows.length-1) + ' linhas');
-      openTable(currentTable, currentPage);
-      refreshTables();
-    }catch(e){
-      db.run('ROLLBACK');
-      alert('Erro import CSV: ' + e.message);
-    }
-  }
-
-  // Parse CSV (handles quoted fields)
-  function parseCSV(text){
-    const lines = text.split(/\\r?\\n/).filter(l=>l.trim()!=='');
-    function parseLine(line){
-      const cols = []; let cur = ''; let inQ = false;
-      for(let i=0;i<line.length;i++){
-        const ch = line[i], nxt = line[i+1];
-        if(ch === '"'){
-          if(inQ && nxt === '"'){ cur += '"'; i++; continue; }
-          inQ = !inQ; continue;
-        }
-        if(ch === ',' && !inQ){ cols.push(cur); cur = ''; continue; }
-        cur += ch;
-      }
-      cols.push(cur); return cols;
-    }
-    return lines.map(parseLine);
-  }
-
-  // Edit a row from the current page (opens modal-like inline form)
-  function editRow(idx){
-    const p = window._page; if(!p) return;
-    const cols = p.cols; const row = p.rows[idx];
-    let form = '<form id="editForm">';
-    cols.forEach((c,i)=> form += `<div class="mb-2"><label class="form-label">${escapeHtml(c)}</label><input class="form-control form-control-sm" name="c${i}" value="${escapeHtml(row[i])}" /></div>`);
-    form += '</form>';
-    const modal = document.createElement('div');
-    modal.innerHTML = `<div style="position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:9999">
-      <div style="background:white;padding:16px;border-radius:8px;min-width:420px">
-        <h5>Editar linha — ${escapeHtml(p.table)}</h5>${form}
-        <div style="text-align:right;margin-top:8px">
-          <button id="saveEdit" class="btn btn-primary btn-sm">Salvar</button>
-          <button id="cancelEdit" class="btn btn-outline-secondary btn-sm">Cancelar</button>
-        </div>
-      </div></div>`;
-    document.body.appendChild(modal);
-    modal.querySelector('#cancelEdit').onclick = ()=> modal.remove();
-    modal.querySelector('#saveEdit').onclick = ()=>{
-      const vals = Array.from(document.getElementById('editForm').elements).map(e=> e.value);
-      // find pk columns
-      const schema = db.exec(`PRAGMA table_info("${currentTable}")`);
-      const pk = (schema.length && schema[0].values) ? schema[0].values.filter(r=>r[5]===1).map(r=>r[1]) : [];
-      let where = '';
-      if(pk.length>0){
-        where = pk.map(k => `"${k}"='${String(row[ p.cols.indexOf(k) ] ).replace(/'/g,"''")}'`).join(' AND ');
-      } else {
-        where = `"${p.cols[0]}"='${String(row[0]).replace(/'/g,"''")}'`;
-      }
-      const set = p.cols.map((c,i)=> `"${c}"='${String(vals[i]).replace(/'/g,"''")}'`).join(',');
-      try{
-        db.run(`UPDATE "${currentTable}" SET ${set} WHERE ${where}`);
-        alert('Atualizado');
-        modal.remove();
-        openTable(currentTable, p.page);
-      }catch(e){ alert('Erro update: ' + e.message); }
-    };
-  }
-
-  // Delete row
-  function deleteRow(idx){
-    const p = window._page; if(!p) return;
-    const row = p.rows[idx]; const cols = p.cols;
-    if(!confirm('Confirma excluir linha?')) return;
-    const schema = db.exec(`PRAGMA table_info("${currentTable}")`);
-    const pk = (schema.length && schema[0].values) ? schema[0].values.filter(r=>r[5]===1).map(r=>r[1]) : [];
-    let where = '';
-    if(pk.length>0){
-      where = pk.map(k => `"${k}"='${String(row[ cols.indexOf(k) ]).replace(/'/g,"''")}'`).join(' AND ');
-    } else {
-      where = `"${cols[0]}"='${String(row[0]).replace(/'/g,"''")}'`;
-    }
-    try{
-      db.run(`DELETE FROM "${currentTable}" WHERE ${where}`);
-      alert('Removido');
-      openTable(currentTable, p.page);
-      refreshTables();
-    }catch(e){ alert('Erro DELETE: ' + e.message); }
-  }
-
-  // Import a .sql file: split into statements respecting quotes, then run in a transaction
-  async function importSQLText(sqlText){
-    if(!db){ db = new SQL.Database(); currentFileName = 'BRC_db.sqlite'; setStatus('Banco: ' + currentFileName); }
-    let statements = []; let cur=''; let inSingle=false, inDouble=false;
-    for(let i=0;i<sqlText.length;i++){
-      const ch = sqlText[i];
-      const nxt = sqlText[i+1];
-      if(ch === "'" && !inDouble){ inSingle = !inSingle; cur += ch; continue; }
-      if(ch === '"' && !inSingle){ inDouble = !inDouble; cur += ch; continue; }
-      if(ch === ';' && !inSingle && !inDouble){
-        const s = cur.trim();
-        if(s && !s.startsWith('--') && !s.startsWith('/*')) statements.push(s);
-        cur = ''; continue;
-      }
-      cur += ch;
-    }
-    if(cur.trim() && !cur.trim().startsWith('--')) statements.push(cur.trim());
-    try{
-      db.run('BEGIN TRANSACTION');
-      for(const st of statements){
-        const t = st.trim();
-        if(!t) continue;
-        // ignore single-line comments starting with --
-        if(t.startsWith('--')) continue;
-        db.run(st);
-      }
-      db.run('COMMIT');
-      alert('Arquivo .sql importado com sucesso.');
-      await refreshTables();
-    }catch(err){
-      try{ db.run('ROLLBACK'); }catch(e){}
-      alert('Erro ao importar .sql: ' + err.message);
-    }
-  }
-
-  // Create table quick
-  function createTableQuick(){
-    const n = document.getElementById('newTableName').value.trim();
-    const c = document.getElementById('newTableCols').value.trim();
-    if(!n || !c) return alert('Informe nome e colunas.');
-    try{
-      db.run(`CREATE TABLE "${n}" (${c})`);
-      alert('Tabela criada.');
-      refreshTables();
-    }catch(e){ alert('Erro CREATE: ' + e.message); }
-  }
-
-  // simple helper to set up DOM handlers
-  document.addEventListener('DOMContentLoaded', async ()=>{
-    try{ await initSql(); }catch(e){ alert('Falha ao inicializar sql-wasm: ' + e.message); return; }
-
-    document.getElementById('btnOpen').onclick = ()=> document.getElementById('fileInput').click();
-    document.getElementById('fileInput').onchange = e => { const f = e.target.files[0]; if(f) openDbFromFile(f); };
-
-    document.getElementById('btnImportSQL').onclick = ()=> document.getElementById('sqlFileInput').click();
-    document.getElementById('sqlFileInput').onchange = async e => { const f = e.target.files[0]; if(!f) return; const txt = await f.text(); await importSQLText(txt); };
-
-    document.getElementById('btnNew').onclick = createNewDb;
-    document.getElementById('btnExportDb').onclick = exportDb;
-    document.getElementById('btnRefresh').onclick = refreshTables;
-
-    document.getElementById('btnRun').onclick = runSQL;
-    document.getElementById('btnClear').onclick = ()=>{ document.getElementById('sqlArea').value=''; document.getElementById('sqlResult').innerHTML=''; };
-
-    document.getElementById('btnCreateTable').onclick = createTableQuick;
-    document.getElementById('btnExportTable').onclick = exportTableCSV;
-    document.getElementById('btnImportTableCSV').onclick = ()=> document.getElementById('csvInput').click();
-    document.getElementById('csvInput').onchange = e => importCsvToTable(e.target.files[0]);
-
-    document.getElementById('pageSize').onchange = ()=> openTable(currentTable, 1);
-    document.getElementById('filterInput').onkeydown = (e)=>{ if(e.key==='Enter') openTable(currentTable,1); };
-    document.getElementById('btnPrev').onclick = ()=> { if(currentPage>1) openTable(currentTable, currentPage-1); };
-    document.getElementById('btnNext').onclick = ()=> { currentPage++; openTable(currentTable, currentPage); };
-  });
-  </script>
+  <!-- local sql.js loader required: local files included in this package -->
+  <script src="sql-wasm.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
