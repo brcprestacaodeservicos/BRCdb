@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DB Browser — Web Offline</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body{background:#f4f6f8;padding:14px;font-family:Inter,system-ui,Arial}
+    .card-ui{background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 6px rgba(0,0,0,0.06);margin-bottom:12px}
+    .sidebar{width:280px}
+    .main{flex:1;min-width:0}
+    .table-wrapper{background:#fff;padding:10px;border-radius:8px;border:1px solid #eef2f6}
+    .small-muted{color:#6b7280}
+    .btn-small{padding:.25rem .5rem;font-size:.85rem}
+    pre.sql{background:#0b1220;color:#9ef39e;padding:12px;border-radius:6px;overflow:auto}
+  </style>
+</head>
+<body>
+  <div class="d-flex align-items-center mb-3">
+    <h4 class="me-auto">DB Browser — Web (Offline)</h4>
+    <div id="status" class="small text-muted me-3">Nenhum DB carregado</div>
+    <input type="file" id="fileInput" accept=".sqlite,.db,.sqlite3" style="display:none" />
+    <button class="btn btn-primary btn-sm me-2" id="btnOpen">Abrir DB</button>
+    <button class="btn btn-outline-secondary btn-sm me-2" id="btnNew">Novo DB</button>
+    <button class="btn btn-success btn-sm me-2" id="btnExportDb">Exportar DB</button>
+  </div>
+
+  <div style="display:flex;gap:12px">
+    <div class="sidebar card-ui p-2">
+      <h6>Tabelas</h6>
+      <div id="tablesList" class="list-group mb-2 small-muted">—</div>
+      <div class="mb-2">
+        <button class="btn btn-sm btn-outline-primary btn-small" id="btnRefresh">Atualizar</button>
+      </div>
+      <hr />
+      <h6>Criar tabela (visual)</h6>
+      <div id="createTableArea" class="mb-2">
+        <input class="form-control form-control-sm mb-1" id="newTableName" placeholder="nome_tabela" />
+        <input class="form-control form-control-sm mb-1" id="newTableCols" placeholder='ex: id INTEGER PRIMARY KEY, nome TEXT' />
+        <div class="d-flex justify-content-end"><button class="btn btn-sm btn-success btn-small" id="btnCreateTable">Criar</button></div>
+      </div>
+      <hr />
+      <div class="small text-muted">Importante:</div>
+      <div class="small text-muted">Para usar offline você precisa colocar <code>sql-wasm.js</code> e <code>sql-wasm.wasm</code> nesta pasta.</div>
+    </div>
+
+    <div class="main">
+      <div class="card-ui">
+        <h6>Console SQL</h6>
+        <textarea id="sqlArea" class="form-control" rows="6" placeholder="Digite sua query SQL..."></textarea>
+        <div class="d-flex align-items-center mt-2">
+          <button class="btn btn-primary btn-sm btn-small" id="btnRun">Executar</button>
+          <button class="btn btn-outline-secondary btn-sm btn-small ms-2" id="btnClear">Limpar</button>
+          <div id="queryInfo" class="ms-auto small-muted"></div>
+        </div>
+        <div id="sqlResult" class="mt-3"></div>
+      </div>
+
+      <div id="tableView" class="card-ui" style="display:none;margin-top:12px">
+        <div class="d-flex align-items-center mb-2">
+          <h6 id="tableTitle" class="me-auto">Tabela</h6>
+          <div class="small-muted me-2" id="tableCount"></div>
+          <button class="btn btn-sm btn-outline-secondary btn-small me-1" id="btnExportTable">Export CSV</button>
+          <button class="btn btn-sm btn-outline-secondary btn-small me-1" id="btnImportTableCSV">Import CSV</button>
+          <input type="file" id="csvInput" accept=".csv" style="display:none" />
+        </div>
+
+        <div class="mb-2 d-flex gap-2">
+          <input class="form-control form-control-sm" id="filterInput" placeholder='Filtro (WHERE) ex: name LIKE "%jo%"' />
+          <select id="pageSize" class="form-select form-select-sm" style="width:120px"><option>10</option><option selected>25</option><option>50</option><option>100</option></select>
+          <div class="ms-auto">
+            <button class="btn btn-sm btn-outline-secondary btn-small" id="btnPrev">Anterior</button>
+            <button class="btn btn-sm btn-outline-secondary btn-small" id="btnNext">Próxima</button>
+          </div>
+        </div>
+
+        <div id="tableDataArea"></div>
+        <div id="paginationArea" class="mt-2 small-muted"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Local sql.js loader (must exist in same folder) -->
+  <script src="sql-wasm.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

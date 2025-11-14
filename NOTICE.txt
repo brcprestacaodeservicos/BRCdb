@@ -1,0 +1,1 @@
+Place the official sql-wasm.js and sql-wasm.wasm files in this folder before using. See README.
