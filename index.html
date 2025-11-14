@@ -3,85 +3,87 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DB Browser — Web Offline</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>BRC_db — BRC Prestação de Serviços</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body{background:#f4f6f8;padding:14px;font-family:Inter,system-ui,Arial}
-    .card-ui{background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 6px rgba(0,0,0,0.06);margin-bottom:12px}
-    .sidebar{width:280px}
-    .main{flex:1;min-width:0}
-    .table-wrapper{background:#fff;padding:10px;border-radius:8px;border:1px solid #eef2f6}
-    .small-muted{color:#6b7280}
-    .btn-small{padding:.25rem .5rem;font-size:.85rem}
-    pre.sql{background:#0b1220;color:#9ef39e;padding:12px;border-radius:6px;overflow:auto}
+    /* BRC theme: blue & white modern */
+    body{background:linear-gradient(180deg,#f5f8fb 0%, #ffffff 100%);padding:18px;font-family:Inter,system-ui,Arial}
+    .topbar{display:flex;align-items:center;margin-bottom:18px}
+    .brand{font-weight:700;color:#0f172a;margin-right:12px}
+    .status{color:#475569;margin-left:12px}
+    .card-ui{background:#fff;border-radius:10px;padding:14px;box-shadow:0 6px 20px rgba(14,30,60,0.06);}
+    .sidebar{width:300px}
+    .btn-primary{background:linear-gradient(90deg,#0ea5e9,#1e40af);border:none}
+    .btn-primary:hover{filter:brightness(0.95)}
+    .list-group-item{border:none;padding-left:0;padding-right:0}
+    .small-muted{color:#64748b}
+    .table-wrapper{background:#fff;padding:10px;border-radius:8px;border:1px solid #e6f0ff}
   </style>
 </head>
 <body>
-  <div class="d-flex align-items-center mb-3">
-    <h4 class="me-auto">DB Browser — Web (Offline)</h4>
-    <div id="status" class="small text-muted me-3">Nenhum DB carregado</div>
-    <input type="file" id="fileInput" accept=".sqlite,.db,.sqlite3" style="display:none" />
-    <button class="btn btn-primary btn-sm me-2" id="btnOpen">Abrir DB</button>
-    <button class="btn btn-outline-secondary btn-sm me-2" id="btnNew">Novo DB</button>
-    <button class="btn btn-success btn-sm me-2" id="btnExportDb">Exportar DB</button>
+  <div class="topbar">
+    <div class="brand"><img src="logo.png" alt="BRC" style="height:36px;vertical-align:middle;margin-right:8px"/>BRC_db</div>
+    <div id="status" class="status">Nenhum banco carregado</div>
+    <div style="margin-left:auto">
+      <input type="file" id="fileInput" accept=".sqlite,.db,.sqlite3" style="display:none" />
+      <input type="file" id="sqlFileInput" accept=".sql" style="display:none" />
+      <button class="btn btn-primary btn-sm" id="btnOpen">Abrir .db</button>
+      <button class="btn btn-outline-primary btn-sm" id="btnImportSQL">Importar .sql</button>
+      <button class="btn btn-outline-secondary btn-sm" id="btnNew">Novo DB</button>
+      <button class="btn btn-success btn-sm" id="btnExportDb">Exportar DB</button>
+    </div>
   </div>
 
-  <div style="display:flex;gap:12px">
-    <div class="sidebar card-ui p-2">
-      <h6>Tabelas</h6>
-      <div id="tablesList" class="list-group mb-2 small-muted">—</div>
-      <div class="mb-2">
-        <button class="btn btn-sm btn-outline-primary btn-small" id="btnRefresh">Atualizar</button>
+  <div style="display:flex;gap:16px">
+    <div class="sidebar">
+      <div class="card-ui mb-3">
+        <h6>Tabelas</h6>
+        <div id="tablesList" class="list-group small-muted">—</div>
+        <div class="mt-2"><button class="btn btn-sm btn-outline-primary" id="btnRefresh">Atualizar</button></div>
+        <hr/>
+        <h6>Criar tabela (rápido)</h6>
+        <input id="newTableName" class="form-control form-control-sm mb-1" placeholder="nome_tabela" />
+        <input id="newTableCols" class="form-control form-control-sm mb-1" placeholder="ex: id INTEGER PRIMARY KEY, nome TEXT" />
+        <div class="d-flex justify-content-end"><button id="btnCreateTable" class="btn btn-sm btn-success">Criar</button></div>
       </div>
-      <hr />
-      <h6>Criar tabela (visual)</h6>
-      <div id="createTableArea" class="mb-2">
-        <input class="form-control form-control-sm mb-1" id="newTableName" placeholder="nome_tabela" />
-        <input class="form-control form-control-sm mb-1" id="newTableCols" placeholder='ex: id INTEGER PRIMARY KEY, nome TEXT' />
-        <div class="d-flex justify-content-end"><button class="btn btn-sm btn-success btn-small" id="btnCreateTable">Criar</button></div>
-      </div>
-      <hr />
-      <div class="small text-muted">Importante:</div>
-      <div class="small text-muted">Para usar offline você precisa colocar <code>sql-wasm.js</code> e <code>sql-wasm.wasm</code> nesta pasta.</div>
+      <div class="card-ui small-muted">Adaptado para BRC Prestação de Serviços — interface web compatível com DB Browser.</div>
     </div>
 
-    <div class="main">
-      <div class="card-ui">
+    <div style="flex:1;min-width:0">
+      <div class="card-ui mb-3">
         <h6>Console SQL</h6>
         <textarea id="sqlArea" class="form-control" rows="6" placeholder="Digite sua query SQL..."></textarea>
         <div class="d-flex align-items-center mt-2">
-          <button class="btn btn-primary btn-sm btn-small" id="btnRun">Executar</button>
-          <button class="btn btn-outline-secondary btn-sm btn-small ms-2" id="btnClear">Limpar</button>
+          <button id="btnRun" class="btn btn-primary btn-sm">Executar</button>
+          <button id="btnClear" class="btn btn-outline-secondary btn-sm ms-2">Limpar</button>
           <div id="queryInfo" class="ms-auto small-muted"></div>
         </div>
         <div id="sqlResult" class="mt-3"></div>
       </div>
 
-      <div id="tableView" class="card-ui" style="display:none;margin-top:12px">
+      <div id="tableView" class="card-ui" style="display:none">
         <div class="d-flex align-items-center mb-2">
           <h6 id="tableTitle" class="me-auto">Tabela</h6>
-          <div class="small-muted me-2" id="tableCount"></div>
-          <button class="btn btn-sm btn-outline-secondary btn-small me-1" id="btnExportTable">Export CSV</button>
-          <button class="btn btn-sm btn-outline-secondary btn-small me-1" id="btnImportTableCSV">Import CSV</button>
+          <div id="tableCount" class="small-muted me-2">Linhas: 0</div>
+          <button id="btnExportTable" class="btn btn-sm btn-outline-secondary me-1">Export CSV</button>
+          <button id="btnImportTableCSV" class="btn btn-sm btn-outline-secondary">Import CSV</button>
           <input type="file" id="csvInput" accept=".csv" style="display:none" />
         </div>
-
         <div class="mb-2 d-flex gap-2">
-          <input class="form-control form-control-sm" id="filterInput" placeholder='Filtro (WHERE) ex: name LIKE "%jo%"' />
+          <input id="filterInput" class="form-control form-control-sm" placeholder='Filtro (WHERE) ex: name LIKE "%jo%"' />
           <select id="pageSize" class="form-select form-select-sm" style="width:120px"><option>10</option><option selected>25</option><option>50</option><option>100</option></select>
           <div class="ms-auto">
-            <button class="btn btn-sm btn-outline-secondary btn-small" id="btnPrev">Anterior</button>
-            <button class="btn btn-sm btn-outline-secondary btn-small" id="btnNext">Próxima</button>
+            <button id="btnPrev" class="btn btn-sm btn-outline-secondary">Anterior</button>
+            <button id="btnNext" class="btn btn-sm btn-outline-secondary">Próxima</button>
           </div>
         </div>
-
         <div id="tableDataArea"></div>
         <div id="paginationArea" class="mt-2 small-muted"></div>
       </div>
     </div>
   </div>
 
-  <!-- Local sql.js loader (must exist in same folder) -->
+  <!-- local loader: include sql-wasm.js and sql-wasm.wasm in same folder -->
   <script src="sql-wasm.js"></script>
   <script src="app.js"></script>
 </body>
