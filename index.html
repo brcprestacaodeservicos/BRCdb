@@ -7,19 +7,21 @@
 <link href="style.css" rel="stylesheet">
 </head>
 <body>
+
+  <!-- SPLASH HEADER COM LOGO CENTRAL -->
   <header class="top splash">
     <div class="splash-inner">
       <img src="logo.png" alt="BRC" class="logo-splash"/>
       <h1>BRC_db</h1>
     </div>
     <div id="status" class="status">Nenhum banco carregado</div>
+
+    <!-- AÇÕES SUPERIORES -->
     <div class="actions top-actions">
-      <input id="fileDbInput" type="file" accept=".sqlite,.db,.sqlite3" style="display:none"/>
-      <input id="fileSqlInput" type="file" accept=".sql" style="display:none"/>
-      <input id="fileCsvInput" type="file" accept=".csv" style="display:none"/>
-      <button id="btnOpenDb" class="btn primary">Abrir .db</button>
+      <input type="file" id="import-db-file" accept=".db,.sqlite" style="display:none">
+      <input type="file" id="import-sql-file" accept=".sql" style="display:none">
+      <button id="btnOpenDb" class="btn outline">Abrir .db</button>
       <button id="btnImportSql" class="btn outline">Importar .sql</button>
-      <button id="btnNewDb" class="btn outline">Criar banco</button>
       <button id="btnExportDb" class="btn success">Exportar DB</button>
     </div>
   </header>
@@ -27,48 +29,55 @@
   <main class="layout">
     <aside class="sidebar card">
       <h3>Bancos</h3>
-      <div id="banksList" class="list">Carregue ou crie um banco</div>
-      <div class="small">Escolha um banco para ver tabelas</div>
+
+      <!-- campo para digitar nome do banco e botao criar -->
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="newBankName" class="input" placeholder="Digite o nome do banco (ex: BRC_db_1)">
+        <button id="btnCreateBank" class="btn primary">Criar banco</button>
+      </div>
+
+      <div id="banksList" class="list small-muted">Carregue ou crie um banco</div>
+
       <hr/>
-      <h4>Criar tabela</h4>
-      <label>Banco</label>
-      <select id="selectBankForCreate" class="input"></select>
-      <label>Nome da tabela</label>
-      <input id="newTableName" class="input" placeholder="nome_tabela"/>
-      <label>Colunas (ex: id INTEGER PRIMARY KEY, nome TEXT)</label>
-      <input id="newTableCols" class="input" placeholder='id INTEGER PRIMARY KEY, nome TEXT'/>
-      <button id="btnCreateTable" class="btn primary block">Criar tabela</button>
+      <h4>Tabelas do banco selecionado</h4>
+      <div id="tablesList" class="list small-muted">—</div>
     </aside>
 
     <section class="main card">
-      <div class="sql-console">
+      <!-- CONSOLE SQL -->
+      <div class="sql-console card" style="margin-bottom:12px">
         <h4>Console SQL</h4>
-        <textarea id="sqlConsole" class="sqlarea" placeholder="Comandos SQL aparecerão aqui..."></textarea>
-        <div class="row">
+        <textarea id="sqlConsole" class="sqlarea" placeholder="Aqui aparecerá o script importado — escreva CREATE/INSERT/ALTER/SELECT etc."></textarea>
+        <div class="row" style="margin-top:8px">
           <div>
             <button id="btnRunSql" class="btn primary">Executar</button>
             <button id="btnClearSql" class="btn outline">Limpar</button>
-            <button id="btnShowLog" class="btn outline">Mostrar log</button>
+            <button id="btnSaveSql" class="btn outline">Salvar Script (download)</button>
           </div>
-          <div class="small muted" id="consoleStatus"></div>
+          <div class="small muted" id="consoleStatus" style="margin-left:12px"></div>
         </div>
       </div>
 
-      <div id="tableArea" class="table-area card" style="display:none">
+      <!-- RESULTADOS / TABELA -->
+      <div id="tableArea" class="table-area card" style="display:none;margin-bottom:12px">
         <div class="table-header">
           <h4 id="tableTitle">Tabela</h4>
           <div id="tableInfo" class="muted"></div>
           <div class="table-actions">
             <button id="btnExportTableCsv" class="btn outline">Exportar CSV</button>
             <button id="btnImportTableCsv" class="btn outline">Importar CSV</button>
+            <input type="file" id="import-csv" accept=".csv" style="display:none">
           </div>
         </div>
         <div id="tableData" class="table-data"></div>
       </div>
 
+      <!-- LOG -->
       <div class="log card">
         <h4>Log de ações</h4>
         <div id="logArea" class="logArea"></div>
+        <h4 style="margin-top:12px">Tabelas criadas / existentes</h4>
+        <div id="logTables" class="list small-muted"></div>
       </div>
     </section>
   </main>
@@ -77,7 +86,7 @@
     <div>© BRC Prestação de Serviços — Sistema BRC_db</div>
   </footer>
 
-  <!-- local sql.js loader required: local files included in this package -->
+  <!-- local sql.js loader required -->
   <script src="sql-wasm.js"></script>
   <script src="app.js"></script>
 </body>
